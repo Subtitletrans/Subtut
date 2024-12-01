@@ -33,6 +33,9 @@ import time
 import math
 import io
 import os
+
+from os import environ
+
 from aiohttp import web
 
 firebase = firebase.FirebaseApplication(cred.DB_URL)
