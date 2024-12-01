@@ -9,3 +9,4 @@ python-jwt
 requests-toolbelt
 sseclient
 pytz
+aiohttp~=3.11.8
