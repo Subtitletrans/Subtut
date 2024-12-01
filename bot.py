@@ -1,7 +1,7 @@
 from firebase import firebase
 from creds import cred
 from googletrans import Translator
-from pyrogram import Client, filters
+from pyrogram import Client, idle, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from process import (
     check,
@@ -33,6 +33,7 @@ import time
 import math
 import io
 import os
+from aiohttp import web
 
 firebase = firebase.FirebaseApplication(cred.DB_URL)
 app = Client(
@@ -41,6 +42,18 @@ app = Client(
     api_hash=cred.API_HASH,
     bot_token=cred.BOT_TOKEN,
 )
+routes = web.RouteTableDef()
+
+
+@routes.get("/", allow_head=True)
+async def root_route_handler(_):
+    return web.json_response("OK")
+
+
+async def web_server():
+    web_app = web.Application(client_max_size=300000)
+    web_app.add_routes(routes)
+    return web_app
 
 
 @app.on_message(filters.command(["start"]))
@@ -242,4 +255,16 @@ def data(client, callback_query):
                     pass
 
 
-app.run()
+async def runner():
+    await app.start()
+    wapp = web.AppRunner(await web_server())
+    await wapp.setup()
+    await web.TCPSite(wapp, "0.0.0.0", int(environ.get("PORT", 9000))).start()
+    print("Started!")
+    await idle()
+    await app.stop(True)
+    print("Bye!")
+
+
+if __name__ == "__main__":
+    app.run(runner())
